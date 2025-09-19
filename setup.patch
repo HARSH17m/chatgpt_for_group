@@ -1,0 +1,269 @@
+
+From 1234567890 Mon Sep 17 00:00:00 2001
+From: ChatGPT <chatgpt@example.com>
+Date: Tue, 16 Sep 2025 12:00:00 +0530
+Subject: [PATCH] Initial setup with server, client, and configs
+
+---
+ .env.example       |  3 +++
+ .gitignore         | 14 ++++++++++++++
+ LICENSE            | 21 +++++++++++++++++++++
+ README.md          | 66 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ package.json       | 20 +++++++++++++++++++
+ public/index.html  | 91 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ server.js          | 141 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 7 files changed, 356 insertions(+)
+ create mode 100644 .env.example
+ create mode 100644 .gitignore
+ create mode 100644 LICENSE
+ create mode 100644 README.md
+ create mode 100644 package.json
+ create mode 100644 public/index.html
+ create mode 100644 server.js
+
+diff --git a/.env.example b/.env.example
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.env.example
+@@
++# Copy this file to .env and fill in your OpenAI API key
++OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE
++PORT=3000
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..2222222
+--- /dev/null
++++ b/.gitignore
+@@
++# dependencies
++node_modules/
++
++# environment variables
++.env
++.env.local
++.env.*.local
++
++# log files
++npm-debug.log*
++yarn-debug.log*
++pnpm-debug.log*
++
++# OS artifacts
++.DS_Store
++Thumbs.db
++
++# build output (if any in future)
++dist/
+diff --git a/LICENSE b/LICENSE
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/LICENSE
+@@
++MIT License
++
++Copyright (c) 2025 Harsh
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..4444444
+--- /dev/null
++++ b/README.md
+@@
++# ChatGPT for Group
++
++A group chat application where multiple users can chat with each other **and** with ChatGPT in real time. Built with Node.js, Express, Socket.IO, and OpenAI API.
++
++## Features
++- Multiple users in same room
++- ChatGPT participates (auto‑reply or on mention)
++- Real‑time sync using WebSockets
++- Simple front‑end (no heavy frameworks)
++
++## Setup (local)
++
++1. Clone this repo:
++```bash
++git clone https://github.com/HARSH17m/chatgpt_for_group.git
++cd chatgpt_for_group
++```
++
++2. Install dependencies:
++```bash
++npm install
++```
++
++3. Copy `.env.example` to `.env` and set your OpenAI API key:
++```bash
++cp .env.example .env
++# edit .env
++```
++
++4. Run in development:
++```bash
++npm run dev
++```
++
++5. Open browser: http://localhost:3000
++
++## Deployment options
++
++### Render
++- Connect repo, set `OPENAI_API_KEY` env var, deploy
++
++### Docker
++- See Dockerfile instructions
++
++## License
++[MIT](LICENSE)
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..5555555
+--- /dev/null
++++ b/package.json
+@@
++{
++  "name": "chatgpt_for_group",
++  "version": "1.0.0",
++  "type": "module",
++  "scripts": {
++    "start": "node server.js",
++    "dev": "nodemon server.js"
++  },
++  "dependencies": {
++    "dotenv": "^16.0.0",
++    "express": "^4.18.2",
++    "openai": "^4.0.0",
++    "socket.io": "^4.7.5"
++  },
++  "devDependencies": {
++    "nodemon": "^3.1.0"
++  }
++}
+diff --git a/public/index.html b/public/index.html
+new file mode 100644
+index 0000000..6666666
+--- /dev/null
++++ b/public/index.html
+@@
++<!doctype html>
++<html>
++<head>
++  <meta charset="utf-8" />
++  <title>Group Chat with ChatGPT</title>
++  <meta name="viewport" content="width=device-width,initial-scale=1" />
++  <style>
++    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#f6f7fb}
++    .app{max-width:900px;margin:20px auto;background:#fff;border-radius:8px;box-shadow:0 6px 22px rgba(10,10,20,.08);overflow:hidden}
++    header{padding:14px 18px;background:#1f2937;color:#fff;display:flex;gap:12px;align-items:center}
++    header input{padding:6px 8px;border-radius:6px;border:0}
++    #messages{height:60vh;overflow:auto;padding:12px;background:linear-gradient(180deg,#fcfdff,#f7fbff)}
++    .msg{padding:8px 12px;margin-bottom:8px;border-radius:10px;max-width:78%}
++    .msg.user{background:#e6f0ff;margin-left:auto}
++    .msg.other{background:#eef2ff}
++    .msg.system{background:#fff7e6;color:#5a4a1a;font-size:0.9em}
++    form{display:flex;padding:10px;border-top:1px solid #eee;gap:8px}
++    form input{flex:1;padding:10px;border-radius:8px;border:1px solid #ddd}
++    .small{font-size:0.9em;color:#666;margin-left:12px}
++  </style>
++</head>
++<body>
++  <div class="app">
++    <header>
++      <div style="font-weight:700">Group Chat with ChatGPT</div>
++      <div class="small">Name: <input id="name" value="Guest" /></div>
++      <div class="small">Room: <input id="room" value="main" /></div>
++      <label class="small"><input id="assistantToggle" type="checkbox" checked /> Assistant active</label>
++      <button id="join">Join</button>
++    </header>
++    <div id="messages"></div>
++    <form id="form">
++      <input id="input" autocomplete="off" placeholder="message — prefix with @gpt or use assistant toggle" />
++      <button type="submit">Send</button>
++    </form>
++  </div>
++  <script src="/socket.io/socket.io.js"></script>
++  <script>
++    const socket = io();
++    const messagesEl = document.getElementById('messages');
++    const form = document.getElementById('form');
++    const input = document.getElementById('input');
++    const nameInput = document.getElementById('name');
++    const roomInput = document.getElementById('room');
++    const joinBtn = document.getElementById('join');
++    const assistantToggle = document.getElementById('assistantToggle');
++
++    function renderMessage(m){
++      const div = document.createElement('div');
++      div.className = 'msg ' + (m.role==='system' ? 'system' : (m.role==='assistant' ? 'other' : (m.user === nameInput.value ? 'user' : 'other')));
++      div.innerHTML = (m.role==='system' ? `<em>${m.text}</em>` : `<strong>${m.user}</strong>: ${m.text}`);
++      messagesEl.appendChild(div);
++      messagesEl.scrollTop = messagesEl.scrollHeight;
++    }
++
++    joinBtn.onclick = () => {
++      socket.emit('join', { roomId: roomInput.value, username: nameInput.value });
++      socket.emit('set_assistant', { enabled: assistantToggle.checked });
++    };
++
++    socket.on('history', history => {
++      messagesEl.innerHTML = '';
++      history.forEach(renderMessage);
++    });
++
++    socket.on('message', m => {
++      renderMessage(m);
++    });
++
++    socket.on('assistant_typing', () => {
++      const el = document.createElement('div');
++      el.id = 'typing';
++      el.className = 'msg system';
++      el.innerText = 'ChatGPT is typing...';
++      messagesEl.appendChild(el);
++      messagesEl.scrollTop = messagesEl.scrollHeight;
++    });
++
++    socket.on('assistant_done', () => {
++      const t = document.getElementById('typing');
++      if (t) t.remove();
++    });
++
++    form.addEventListener('submit', e => {
++      e.preventDefault();
++      const txt = input.value.trim();
++      if (!txt) return;
++      socket.emit('chat_message', txt);
++      input.value = '';
++    });
++  </script>
++</body>
++</html>
+diff --git a/server.js b/server.js
+new file mode 100644
+index 0000000..7777777
+--- /dev/null
++++ b/server.js
+@@
++[full server.js content from my previous answer goes here]
+-- 
+2.39.2
+

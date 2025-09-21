@@ -86,6 +86,7 @@ async function processAIQueue(roomId) {
 
   try {
     console.log(`HF request -> model=${HF_MODEL} room=${roomId} from=${username || socketId}`);
+    console.log('Sending to HF:', { message, typeofMessage: typeof message });
     const resp = await fetch(HF_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -150,3 +151,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT} — HF model: ${HF_MODEL}`);
 });
+

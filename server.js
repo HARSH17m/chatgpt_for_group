@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const HUGGING_FACE_KEY = process.env.HUGGING_FACE_API_KEY;
+const HF_MODEL = process.env.HF_MODEL || "gpt2";
+
 if (!HUGGING_FACE_KEY) {
   console.error("Missing HUGGING_FACE_API_KEY in environment");
   process.exit(1);
@@ -77,7 +79,7 @@ async function processAIQueue(roomId) {
   io.to(roomId).emit('aiTyping', true);
 
   try {
-    const response = await fetch('https://api-inference.huggingface.co/models/gpt2', {
+    const response = await fetch('https://api-inference.huggingface.co/models/${HF_MODEL}', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${HUGGING_FACE_KEY}`,
@@ -114,4 +116,5 @@ async function processAIQueue(roomId) {
 }
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 

@@ -1,4 +1,4 @@
-/* Reset basic styling */
+/* Reset */
 * {
   margin: 0;
   padding: 0;
@@ -14,7 +14,7 @@ body {
   align-items: center;
 }
 
-/* Container for screens */
+/* Containers */
 .container {
   background: #fff;
   width: 100%;
@@ -27,8 +27,8 @@ body {
   gap: 20px;
 }
 
-/* Input fields */
-input[type="text"], input[type="number"] {
+/* Inputs */
+input[type="text"] {
   width: 100%;
   padding: 12px 15px;
   border-radius: 10px;
@@ -37,7 +37,7 @@ input[type="text"], input[type="number"] {
   transition: 0.3s;
 }
 
-input[type="text"]:focus, input[type="number"]:focus {
+input[type="text"]:focus {
   border-color: #4facfe;
   outline: none;
   box-shadow: 0 0 5px rgba(79,172,254,0.5);
@@ -59,12 +59,12 @@ button:hover {
   background: #00f2fe;
 }
 
-/* Chat screen */
+/* Chat container */
 .chat-container {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 500px;
+  max-height: 400px;
   overflow-y: auto;
   padding: 10px;
   border: 1px solid #eee;
@@ -72,6 +72,7 @@ button:hover {
   background: #f9f9f9;
 }
 
+/* Messages */
 .message {
   padding: 10px 15px;
   border-radius: 15px;
@@ -104,12 +105,12 @@ button:hover {
   margin-bottom: 5px;
 }
 
-/* Room/members display */
+/* Members list */
 .members {
   display: flex;
   gap: 10px;
-  margin-bottom: 10px;
   flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
 .member {
@@ -120,7 +121,7 @@ button:hover {
   font-size: 14px;
 }
 
-/* Input area at bottom */
+/* Input area */
 .input-area {
   display: flex;
   gap: 10px;
@@ -136,8 +137,7 @@ button:hover {
   .container {
     padding: 20px;
   }
-
   .chat-container {
-    max-height: 400px;
+    max-height: 300px;
   }
 }

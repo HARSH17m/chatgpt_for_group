@@ -3,7 +3,7 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
-import fetch from 'node-fetch';
+import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
@@ -13,6 +13,9 @@ if (!GOOGLE_API_KEY) {
   process.exit(1);
 }
 
+// Initialize Google GenAI SDK
+const aiClient = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -20,10 +23,10 @@ const io = new Server(server);
 // Serve static files
 app.use(express.static('public'));
 
-// Simple health check
+// Health check
 app.get('/health', (req, res) => res.send({ ok: true }));
 
-// In-memory rooms
+// In-memory room management
 const rooms = {}; // { roomId: { members: [], aiQueue: [], aiBusy: false } }
 
 io.on('connection', (socket) => {
@@ -50,7 +53,7 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('chatMessage', { username, message });
   });
 
-  // AI messages (tagged)
+  // AI tagged messages
   socket.on('aiMessage', ({ roomId, message, username }) => {
     if (!rooms[roomId]) return;
     const room = rooms[roomId];
@@ -71,7 +74,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// AI Queue Processor
+// AI queue processor using Google GenAI SDK
 async function processAIQueue(roomId) {
   const room = rooms[roomId];
   if (!room || room.aiQueue.length === 0) {
@@ -88,38 +91,18 @@ async function processAIQueue(roomId) {
     console.log(`Google AI request -> room=${roomId} from=${username || socketId}`);
     console.log('Message:', message);
 
-    const payload = {
-      contents: [{ parts: [{ text: message.toString().trim() }] }]
-    };
+    // Call Google AI
+    const response = await aiClient.models.generateContent({
+      model: "gemini-2.5-flash",   // Update model if needed
+      contents: [{ text: message.toString().trim() }]
+    });
 
-    const resp = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-goog-api-key": GOOGLE_API_KEY
-        },
-        body: JSON.stringify(payload)
-      }
-    );
-
-    if (!resp.ok) {
-      const text = await resp.text();
-      console.error(`Google AI Error (${resp.status}): ${text}`);
-      io.to(roomId).emit('chatMessage', {
-        username: 'AI',
-        message: `Google AI Error (${resp.status}): ${text}`
-      });
-    } else {
-      const data = await resp.json();
-      const aiText = data?.candidates?.[0]?.content?.[0]?.text || "AI failed to respond";
-      io.to(roomId).emit('chatMessage', { username: 'AI', message: aiText });
-    }
+    const aiText = response.text || "AI failed to respond";
+    io.to(roomId).emit('chatMessage', { username: 'AI', message: aiText });
 
   } catch (err) {
-    console.error('Google AI Exception:', err);
-    io.to(roomId).emit('chatMessage', { username: 'AI', message: 'Error: AI failed to respond.' });
+    console.error('Google AI SDK Error:', err);
+    io.to(roomId).emit('chatMessage', { username: 'AI', message: `AI Error: ${err.message}` });
   } finally {
     io.to(roomId).emit('aiTyping', false);
     room.aiBusy = false;

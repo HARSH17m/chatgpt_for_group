@@ -1,96 +1,41 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Group Chat with ChatGPT</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#f6f7fb}
-    .app{max-width:900px;margin:20px auto;background:#fff;border-radius:8px;box-shadow:0 6px 22px rgba(10,10,20,.08);overflow:hidden}
-    header{padding:14px 18px;background:#1f2937;color:#fff;display:flex;gap:12px;align-items:center}
-    header input{padding:6px 8px;border-radius:6px;border:0}
-    #messages{height:60vh;overflow:auto;padding:12px;background:linear-gradient(180deg,#fcfdff,#f7fbff)}
-    .msg{padding:8px 12px;margin-bottom:8px;border-radius:10px;max-width:78%}
-    .msg.user{background:#e6f0ff;margin-left:auto}
-    .msg.other{background:#eef2ff}
-    .msg.system{background:#fff7e6;color:#5a4a1a;font-size:0.9em}
-    form{display:flex;padding:10px;border-top:1px solid #eee;gap:8px}
-    form input{flex:1;padding:10px;border-radius:8px;border:1px solid #ddd}
-    .small{font-size:0.9em;color:#666;margin-left:12px}
-  </style>
+<meta charset="UTF-8" />
+<title>Group Chat with Hugging Face</title>
+<style>
+  body { font-family: Arial; margin: 0; padding: 20px; }
+  #messages { list-style: none; padding: 0; max-height: 400px; overflow-y: auto; }
+  li { margin-bottom: 10px; }
+  input { width: 80%; padding: 10px; }
+  button { padding: 10px; }
+</style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div style="font-weight:700">Group Chat with ChatGPT</div>
-      <div class="small">Name: <input id="name" value="Guest" /></div>
-      <div class="small">Room: <input id="room" value="main" /></div>
-      <label class="small"><input id="assistantToggle" type="checkbox" checked /> Assistant active</label>
-      <button id="join">Join</button>
-    </header>
+<h2>Group Chat</h2>
+<ul id="messages"></ul>
+<input id="input" autocomplete="off" placeholder="Type a message..." />
+<button id="send">Send</button>
 
-    <div id="messages"></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+const messagesEl = document.getElementById("messages");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("send");
 
-    <form id="form">
-      <input id="input" autocomplete="off" placeholder="message — prefix with @gpt or use assistant toggle" />
-      <button type="submit">Send</button>
-    </form>
-  </div>
+sendBtn.onclick = () => {
+  if(input.value.trim() === "") return;
+  socket.emit("chat message", input.value);
+  input.value = "";
+};
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const messagesEl = document.getElementById('messages');
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
-    const nameInput = document.getElementById('name');
-    const roomInput = document.getElementById('room');
-    const joinBtn = document.getElementById('join');
-    const assistantToggle = document.getElementById('assistantToggle');
-
-    function renderMessage(m){
-      const div = document.createElement('div');
-      div.className = 'msg ' + (m.role==='system' ? 'system' : (m.role==='assistant' ? 'other' : (m.user === nameInput.value ? 'user' : 'other')));
-      div.innerHTML = (m.role==='system' ? `<em>${m.text}</em>` : `<strong>${m.user}</strong>: ${m.text}`);
-      messagesEl.appendChild(div);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    joinBtn.onclick = () => {
-      socket.emit('join', { roomId: roomInput.value, username: nameInput.value });
-      socket.emit('set_assistant', { enabled: assistantToggle.checked });
-    };
-
-    socket.on('history', history => {
-      messagesEl.innerHTML = '';
-      history.forEach(renderMessage);
-    });
-
-    socket.on('message', m => {
-      renderMessage(m);
-    });
-
-    socket.on('assistant_typing', () => {
-      const el = document.createElement('div');
-      el.id = 'typing';
-      el.className = 'msg system';
-      el.innerText = 'ChatGPT is typing...';
-      messagesEl.appendChild(el);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    });
-
-    socket.on('assistant_done', () => {
-      const t = document.getElementById('typing');
-      if (t) t.remove();
-    });
-
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const txt = input.value.trim();
-      if (!txt) return;
-      socket.emit('chat_message', txt);
-      input.value = '';
-    });
-  </script>
+socket.on("chat message", (data) => {
+  const li = document.createElement("li");
+  li.textContent = `${data.user}: ${data.message}`;
+  messagesEl.appendChild(li);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+});
+</script>
 </body>
 </html>

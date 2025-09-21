@@ -2,17 +2,17 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
-import OpenAI from 'openai';
+import { HfInference } from '@huggingface/inference';
 
 dotenv.config();
 
-const OPENAI_KEY = process.env.OPENAI_API_KEY;
-if (!OPENAI_KEY) {
-  console.error("Missing OPENAI_API_KEY in environment");
+const HUGGING_FACE_KEY = process.env.HUGGING_FACE_API_KEY;
+if (!HUGGING_FACE_KEY) {
+  console.error("Missing HUGGING_FACE_API_KEY in environment");
   process.exit(1);
 }
 
-const openai = new OpenAI({ apiKey: OPENAI_KEY });
+const hf = new HfInference(HUGGING_FACE_KEY);
 
 const app = express();
 const server = http.createServer(app);
@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
   });
 
   // AI message request
-  socket.on('aiMessage', async ({ roomId, message }) => {
+  socket.on('aiMessage', ({ roomId, message }) => {
     if (!rooms[roomId]) return;
     const room = rooms[roomId];
 
@@ -60,7 +60,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    // Remove user from all rooms
     for (const roomId in rooms) {
       const room = rooms[roomId];
       room.members = room.members.filter(m => m.id !== socket.id);
@@ -70,7 +69,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// AI Queue processor
+// AI Queue processor using Hugging Face
 async function processAIQueue(roomId) {
   const room = rooms[roomId];
   if (!room || room.aiQueue.length === 0) {
@@ -88,25 +87,25 @@ async function processAIQueue(roomId) {
   io.to(roomId).emit('aiTyping', true);
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: message }],
-      max_tokens: 150,
+    // Call Hugging Face Inference API
+    const response = await hf.textGeneration({
+      model: 'gpt2', // you can replace with a Hugging Face hosted model like "gpt2-medium" or your own
+      inputs: message,
+      parameters: { max_new_tokens: 150 }
     });
 
-    const aiMessage = response.choices[0].message.content;
+    const aiMessage = Array.isArray(response) ? response[0].generated_text : response.generated_text;
 
     io.to(roomId).emit('chatMessage', { username: 'AI', message: aiMessage });
 
   } catch (err) {
-    console.error('AI Error:', err);
+    console.error('Hugging Face AI Error:', err);
     io.to(roomId).emit('chatMessage', { username: 'AI', message: 'Error: AI failed to respond.' });
   }
 
   io.to(roomId).emit('aiTyping', false);
   room.aiBusy = false;
 
-  // Process next in queue
   if (room.aiQueue.length > 0) processAIQueue(roomId);
 }
 

@@ -77,7 +77,6 @@ async function processAIQueue(roomId) {
   io.to(roomId).emit('aiTyping', true);
 
   try {
-    // Hugging Face text generation API
     const response = await fetch('https://api-inference.huggingface.co/models/gpt2', {
       method: 'POST',
       headers: {
@@ -86,16 +85,22 @@ async function processAIQueue(roomId) {
       },
       body: JSON.stringify({
         inputs: message,
-        parameters: { max_new_tokens: 150 }
+        parameters: { max_new_tokens: 100 }
       })
     });
 
-    const data = await response.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('HF API Error:', response.status, errorText);
+      io.to(roomId).emit('chatMessage', { username: 'AI', message: `Error: ${errorText}` });
+    } else {
+      const data = await response.json();
+      const aiMessage = Array.isArray(data)
+        ? data[0]?.generated_text || "AI failed to respond."
+        : data.generated_text || "AI failed to respond.";
 
-    // Hugging Face returns array or object depending on model
-    const aiMessage = Array.isArray(data) ? data[0].generated_text : data.generated_text || "AI failed to respond.";
-
-    io.to(roomId).emit('chatMessage', { username: 'AI', message: aiMessage });
+      io.to(roomId).emit('chatMessage', { username: 'AI', message: aiMessage });
+    }
 
   } catch (err) {
     console.error('Hugging Face AI Error:', err);
@@ -107,6 +112,6 @@ async function processAIQueue(roomId) {
 
   if (room.aiQueue.length > 0) processAIQueue(roomId);
 }
-
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+

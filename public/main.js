@@ -1,74 +1,105 @@
+// main.js
 const socket = io();
 
-const joinContainer = document.getElementById('join-container');
-const chatContainer = document.getElementById('chat-container');
-const usernameInput = document.getElementById('username');
+// Screens
+const startScreen = document.getElementById('startScreen');
+const chatScreen = document.getElementById('chatScreen');
+
+// Inputs and buttons
+const nameInput = document.getElementById('name');
 const roomInput = document.getElementById('room');
 const joinBtn = document.getElementById('joinBtn');
-const joinMsg = document.getElementById('join-msg');
 const messagesEl = document.getElementById('messages');
-const membersEl = document.getElementById('members');
-const messageInput = document.getElementById('message');
+const input = document.getElementById('input');
 const sendBtn = document.getElementById('sendBtn');
 const aiBtn = document.getElementById('aiBtn');
-const aiStatusEl = document.getElementById('ai-status');
 
-let roomId, username;
+// AI & members UI
+const aiQueueEl = document.getElementById('aiQueue');
+const typingIndicator = document.getElementById('typingIndicator');
+const membersList = document.getElementById('membersList');
 
+let username = '';
+let roomId = '';
+
+// Join room
 joinBtn.addEventListener('click', () => {
-  username = usernameInput.value.trim();
-  roomId = roomInput.value.trim() || `guest${Math.floor(Math.random()*10000)}`;
+  username = nameInput.value.trim();
+  roomId = roomInput.value.trim() || undefined;
 
-  if (!username) return alert("Enter a name");
+  if (!username) {
+    alert('Enter your name!');
+    return;
+  }
 
-  socket.emit('joinRoom', { roomId, username }, (res) => {
-    if (!res.success) return joinMsg.textContent = res.message;
+  socket.emit('joinRoom', { roomId, username }, ({ success, roomId: rid, members, message }) => {
+    if (!success) {
+      alert(message);
+      return;
+    }
 
-    joinContainer.classList.add('hidden');
-    chatContainer.classList.remove('hidden');
-    updateMembers(res.members);
+    roomId = rid;
+    startScreen.style.display = 'none';
+    chatScreen.style.display = 'flex';
+    updateMembers(members);
   });
 });
 
-sendBtn.addEventListener('click', () => {
-  const msg = messageInput.value.trim();
+// Send normal message
+sendBtn.addEventListener('click', sendMessage);
+input.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+function sendMessage() {
+  const msg = input.value.trim();
   if (!msg) return;
-  appendMessage(username, msg);
   socket.emit('chatMessage', { roomId, username, message: msg });
-  messageInput.value = '';
-});
+  input.value = '';
+}
 
+// Send AI message
 aiBtn.addEventListener('click', () => {
-  const msg = messageInput.value.trim();
+  const msg = input.value.trim();
   if (!msg) return;
-  socket.emit('aiMessage', { roomId, message: msg });
-  messageInput.value = '';
+  socket.emit('aiMessage', { roomId, username, message: msg });
+  input.value = '';
 });
 
+// Listen for chat messages
 socket.on('chatMessage', ({ username, message }) => {
-  appendMessage(username, message);
+  addMessage(username, message);
 });
 
-socket.on('updateMembers', (members) => {
-  updateMembers(members);
-});
-
+// Listen for AI queue updates
 socket.on('aiQueueUpdate', (queue) => {
-  aiStatusEl.textContent = queue.length > 0 ? `AI Queue: ${queue.join(', ')}` : '';
+  aiQueueEl.textContent = `AI Queue: ${queue.length}`;
 });
 
-socket.on('aiTyping', (status) => {
-  aiStatusEl.textContent = status ? 'AI is typing...' : '';
+// Listen for AI typing
+socket.on('aiTyping', (isTyping) => {
+  typingIndicator.style.display = isTyping ? 'block' : 'none';
 });
 
-function appendMessage(user, text) {
-  const el = document.createElement('div');
-  el.classList.add('message');
-  el.innerHTML = `<strong>${user}:</strong> ${text}`;
-  messagesEl.appendChild(el);
+// Listen for member updates
+socket.on('updateMembers', updateMembers);
+
+// Helper to add messages
+function addMessage(user, message) {
+  const msgEl = document.createElement('div');
+  msgEl.classList.add('message', user === 'AI' ? 'ai' : 'user');
+  msgEl.textContent = `${user}: ${message}`;
+  messagesEl.appendChild(msgEl);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
+// Helper to update members list
 function updateMembers(members) {
-  membersEl.innerHTML = `<strong>Members:</strong> ${members.map(m => m.username).join(', ')}`;
+  membersList.innerHTML = '';
+  members.forEach(m => {
+    const memberEl = document.createElement('div');
+    memberEl.classList.add('member');
+    memberEl.textContent = m.username;
+    membersList.appendChild(memberEl);
+  });
 }

@@ -55,7 +55,7 @@ io.on('connection', socket => {
     const room = rooms[socket.data.roomId];
     if (!room) return;
     room.assistantEnabled = !!enabled;
-    io.to(room.data?.roomId || socket.data.roomId).emit('message', mkMsg('system','system', `Assistant active: ${room.assistantEnabled}`));
+    io.to(socket.data.roomId).emit('message', mkMsg('system','system', `Assistant active: ${room.assistantEnabled}`));
   });
 
   socket.on('chat_message', async text => {

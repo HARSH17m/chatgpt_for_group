@@ -41,6 +41,8 @@ joinBtn.addEventListener('click', () => {
     roomId = rid;
     startScreen.style.display = 'none';
     chatScreen.style.display = 'flex';
+    // Display room ID for sharing
+    document.getElementById('currentRoomId').textContent = roomId;
     updateMembers(members);
   });
 });

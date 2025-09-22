@@ -86,16 +86,44 @@ socket.on('aiTyping', (isTyping) => {
 // Listen for member updates
 socket.on('updateMembers', updateMembers);
 
+// ============================
 // Helper to add messages
+// ============================
 function addMessage(user, message) {
   const msgEl = document.createElement('div');
   msgEl.classList.add('message', user === 'AI' ? 'ai' : 'user');
-  msgEl.textContent = `${user}: ${message}`;
+
+  // AI message with Markdown + animation
+  if (user === 'AI') {
+    // Convert markdown -> HTML
+    const html = marked.parse(message);
+
+    // Optional animation block
+    let i = 0;
+    const tempContainer = document.createElement('div');
+    msgEl.appendChild(tempContainer);
+
+    function typeWriter() {
+      // Add one character at a time
+      tempContainer.innerHTML = html.slice(0, i);
+      i++;
+      if (i <= html.length) {
+        setTimeout(typeWriter, 10); // adjust speed here
+      }
+    }
+    typeWriter();
+  } else {
+    // Normal user message (plain text)
+    msgEl.textContent = `${user}: ${message}`;
+  }
+
   messagesEl.appendChild(msgEl);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
+// ============================
 // Helper to update members list
+// ============================
 function updateMembers(members) {
   membersList.innerHTML = '';
   members.forEach(m => {

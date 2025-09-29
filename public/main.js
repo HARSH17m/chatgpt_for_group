@@ -13,6 +13,8 @@ const messagesEl = document.getElementById('messages');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('sendBtn');
 const aiBtn = document.getElementById('aiBtn');
+const chatContainer = document.getElementById("chatContainer");
+const scrollBtn = document.getElementById("scrollDownBtn");
 
 // AI & members UI
 const aiQueueEl = document.getElementById('aiQueue');
@@ -133,3 +135,22 @@ function updateMembers(members) {
     membersList.appendChild(memberEl);
   });
 }
+
+// Show button only if user scrolls up
+chatContainer.addEventListener("scroll", () => {
+  const nearBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 50;
+  if (nearBottom) {
+    scrollBtn.classList.remove("show");
+  } else {
+    scrollBtn.classList.add("show");
+  }
+});
+
+// Scroll down when button clicked
+scrollBtn.addEventListener("click", () => {
+  chatContainer.scrollTo({
+    top: chatContainer.scrollHeight,
+    behavior: "smooth"
+  });
+});
+

@@ -8,75 +8,47 @@
 
 body {
   background: linear-gradient(135deg, #4facfe, #00f2fe);
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Containers */
+/* Main container now behaves like a full app */
 .container {
   background: #fff;
   width: 100%;
   max-width: 500px;
+  height: 90vh; /* stretch vertically */
   border-radius: 15px;
-  padding: 25px;
+  padding: 15px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-.room-id {
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 5px;
-  font-weight: bold;
 }
 
-
-/* Inputs */
-input[type="text"] {
-  width: 100%;
-  padding: 12px 15px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  transition: 0.3s;
-}
-
-input[type="text"]:focus {
-  border-color: #4facfe;
-  outline: none;
-  box-shadow: 0 0 5px rgba(79,172,254,0.5);
-}
-
-/* Buttons */
-button {
-  padding: 12px 20px;
-  border: none;
-  border-radius: 10px;
-  background: #4facfe;
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-button:hover {
-  background: #00f2fe;
-}
-
-/* Chat container */
+/* Chat container takes available space */
 .chat-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 400px;
+  flex: 1; /* take up all vertical space between header and input */
   overflow-y: auto;
   padding: 10px;
   border: 1px solid #eee;
   border-radius: 10px;
   background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Input area stays at the bottom */
+.input-area {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.input-area input {
+  flex: 1;
 }
 
 /* Messages */
@@ -105,13 +77,6 @@ button:hover {
   color: #666;
 }
 
-/* AI queue display */
-.ai-queue {
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 5px;
-}
-
 /* Members list */
 .members {
   display: flex;
@@ -128,23 +93,34 @@ button:hover {
   font-size: 14px;
 }
 
-/* Input area */
-.input-area {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.input-area input {
-  flex: 1;
-}
-
 /* Responsive */
 @media (max-width: 600px) {
   .container {
-    padding: 20px;
+    height: 100vh;
+    border-radius: 0;
+    max-width: 100%;
   }
-  .chat-container {
-    max-height: 300px;
-  }
+}
+
+.scroll-down-btn {
+  position: absolute;
+  bottom: 70px; /* above input area */
+  right: 20px;
+  background: #4facfe;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  display: none; /* hidden by default */
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: opacity 0.3s;
+}
+
+.scroll-down-btn.show {
+  display: flex;
 }

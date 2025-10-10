@@ -1,6 +1,7 @@
 {
   "name": "google-genai-group-chat",
   "version": "1.0.0",
+  "type": "module",
   "description": "Group chat with Google Gemini AI using Node.js, Express, and Socket.IO",
   "main": "server.js",
   "scripts": {
@@ -21,3 +22,4 @@
   },
   "license": "MIT"
 }
+

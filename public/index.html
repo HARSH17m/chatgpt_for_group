@@ -1,51 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Group AI Chat</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-<div id="startScreen" class="container">
-  <h1>🚀 Group AI Chat</h1>
-  <p>Join a room and start chatting with AI + friends</p>
-  
-  <input type="text" id="name" placeholder="Enter your name">
-  <input type="text" id="room" placeholder="Enter room ID (optional)">
-  
-  <button id="joinBtn">Join Chat</button>
-</div>
-
-<div class="container" id="chatScreen" style="display:none;">
-  <div class="members" id="membersList"></div>
-  <div class="ai-queue" id="aiQueue">AI Queue: 0</div>
-
-  <!-- Room ID display -->
-  <div class="room-id">
-    Room ID: <span id="currentRoomId"></span>
+  <!-- Join Screen -->
+  <div id="startScreen" class="container">
+    <h1>🧠 Group AI Chat</h1>
+    <p>Join a room and chat with AI + your friends!</p>
+    <input type="text" id="name" placeholder="Enter your name" />
+    <input type="text" id="room" placeholder="Enter room ID (optional)" />
+    <button id="joinBtn">Join Chat</button>
   </div>
 
-  <!-- Chat messages + scroll button -->
-  <div class="chat-container" id="chatContainer">
-    <div id="messages"></div>
-    <button class="scroll-down-btn" id="scrollDownBtn">⬇</button>
+  <!-- Chat Screen -->
+  <div class="container" id="chatScreen" style="display:none;">
+    <header class="chat-header">
+      <div class="room-info">
+        Room: <span id="currentRoomId"></span>
+      </div>
+      <div class="ai-queue" id="aiQueue">AI Queue: 0</div>
+    </header>
+
+    <div class="members" id="membersList"></div>
+
+    <div class="chat-container" id="chatContainer">
+      <div id="messages"></div>
+      <button class="scroll-down-btn" id="scrollDownBtn">⬇</button>
+    </div>
+
+    <div class="typing" id="typingIndicator" style="display:none;">AI is typing...</div>
+
+    <div class="input-area">
+      <input type="text" id="input" placeholder="Type a message..." autofocus />
+      <button id="aiBtn">@AI</button>
+      <button id="sendBtn">Send</button>
+    </div>
   </div>
 
-  <div class="typing" id="typingIndicator" style="display:none;">AI is typing...</div>
-
-  <div class="input-area">
-    <input type="text" id="input" placeholder="Type a message..." autofocus>
-    <button id="sendBtn">Send</button>
-    <button id="aiBtn">@AI</button>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="main.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>

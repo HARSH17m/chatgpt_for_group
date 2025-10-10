@@ -130,12 +130,16 @@ body {
   position: relative;
 }
 
+/* Messages */
 .message {
   padding: 10px 15px;
   border-radius: 15px;
   max-width: 80%;
   word-wrap: break-word;
   font-size: 15px;
+  margin-bottom: 10px; /* ✅ added spacing between messages */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25); /* ✅ subtle shadow */
+  transition: transform 0.2s ease;
 }
 
 .message.user {
@@ -144,18 +148,20 @@ body {
   align-self: flex-end;
 }
 
+.message.user:hover {
+  transform: translateY(-2px); /* ✅ slight lift effect */
+}
+
 .message.ai {
   background: #2e2e2e;
   color: #f2f2f2;
   align-self: flex-start;
 }
 
-.message strong {
-  display: block;
-  font-size: 13px;
-  color: #a1ffce;
-  margin-bottom: 4px;
+.message.ai:hover {
+  transform: translateY(-2px);
 }
+
 
 /* Typing */
 .typing {

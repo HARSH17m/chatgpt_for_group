@@ -1,4 +1,3 @@
-// main.js
 const socket = io();
 
 // Screens
@@ -24,26 +23,23 @@ const membersList = document.getElementById('membersList');
 let username = '';
 let roomId = '';
 
+// Helper: scroll to bottom
+function scrollToBottom() {
+  chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+}
+
 // Join room
 joinBtn.addEventListener('click', () => {
   username = nameInput.value.trim();
   roomId = roomInput.value.trim() || undefined;
-
-  if (!username) {
-    alert('Enter your name!');
-    return;
-  }
+  if(!username){ alert('Enter your name!'); return; }
 
   socket.emit('joinRoom', { roomId, username }, ({ success, roomId: rid, members, message }) => {
-    if (!success) {
-      alert(message);
-      return;
-    }
-
+    if(!success){ alert(message); return; }
     roomId = rid;
     startScreen.style.display = 'none';
     chatScreen.style.display = 'flex';
-    // Display room ID for sharing
+    input.focus();
     document.getElementById('currentRoomId').textContent = roomId;
     updateMembers(members);
   });
@@ -51,84 +47,75 @@ joinBtn.addEventListener('click', () => {
 
 // Send normal message
 sendBtn.addEventListener('click', sendMessage);
-input.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') sendMessage();
-});
+input.addEventListener('keypress', (e) => { if(e.key==='Enter') sendMessage(); });
 
-function sendMessage() {
+function sendMessage(){
   const msg = input.value.trim();
-  if (!msg) return;
-  socket.emit('chatMessage', { roomId, username, message: msg });
+  if(!msg) return;
+  const msgEl = document.createElement('div');
+  msgEl.classList.add('message', 'user');
+  msgEl.textContent = `${username}: ${msg} 🕒`; // clock symbol while sending
+  messagesEl.appendChild(msgEl);
+  scrollToBottom();
   input.value = '';
+  input.focus();
+  socket.emit('chatMessage', { roomId, username, message: msg });
+  // simulate delivered tick after emit
+  setTimeout(()=>{ msgEl.textContent = `${username}: ${msg} ✔`; }, 300);
 }
 
 // Send AI message
 aiBtn.addEventListener('click', () => {
   const msg = input.value.trim();
-  if (!msg) return;
-  socket.emit('aiMessage', { roomId, username, message: msg });
+  if(!msg) return;
+  const question = `Q - ${username}: ${msg}`;
+  addMessage(username, question, true); // show question instantly
   input.value = '';
+  input.focus();
+  socket.emit('aiMessage', { roomId, username, message: msg });
 });
 
 // Listen for chat messages
-socket.on('chatMessage', ({ username, message }) => {
-  addMessage(username, message);
-});
+socket.on('chatMessage', ({ username, message }) => { addMessage(username, message); });
 
-// Listen for AI queue updates
-socket.on('aiQueueUpdate', (queue) => {
-  aiQueueEl.textContent = `AI Queue: ${queue.length}`;
-});
+// AI queue
+socket.on('aiQueueUpdate', (queue) => { aiQueueEl.textContent = `AI Queue: ${queue.length}`; });
 
-// Listen for AI typing
+// AI typing
 socket.on('aiTyping', (isTyping) => {
-  typingIndicator.style.display = isTyping ? 'block' : 'none';
+  typingIndicator.style.display = isTyping ? 'flex' : 'none';
 });
 
-// Listen for member updates
+// Update members
 socket.on('updateMembers', updateMembers);
 
-// ============================
-// Helper to add messages
-// ============================
-function addMessage(user, message) {
+function addMessage(user, message, isQuestion=false){
   const msgEl = document.createElement('div');
-  msgEl.classList.add('message', user === 'AI' ? 'ai' : 'user');
+  msgEl.classList.add('message', user==='AI'?'ai':'user');
 
-  // AI message with Markdown + animation
-  if (user === 'AI') {
-    // Convert markdown -> HTML
+  if(user==='AI'){
+    // typewriter + markdown
     const html = marked.parse(message);
-
-    // Optional animation block
-    let i = 0;
+    let i=0;
     const tempContainer = document.createElement('div');
     msgEl.appendChild(tempContainer);
-
-    function typeWriter() {
-      // Add one character at a time
-      tempContainer.innerHTML = html.slice(0, i);
+    function typeWriter(){
+      tempContainer.innerHTML = html.slice(0,i);
       i++;
-      if (i <= html.length) {
-        setTimeout(typeWriter, 10); // adjust speed here
-      }
+      if(i<=html.length) setTimeout(typeWriter,10);
     }
     typeWriter();
   } else {
-    // Normal user message (plain text)
-    msgEl.textContent = `${user}: ${message}`;
+    msgEl.textContent = isQuestion ? message : `${user}: ${message}`;
   }
 
   messagesEl.appendChild(msgEl);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  scrollToBottom();
 }
 
-// ============================
-// Helper to update members list
-// ============================
-function updateMembers(members) {
+function updateMembers(members){
   membersList.innerHTML = '';
-  members.forEach(m => {
+  members.forEach(m=>{
     const memberEl = document.createElement('div');
     memberEl.classList.add('member');
     memberEl.textContent = m.username;
@@ -136,21 +123,15 @@ function updateMembers(members) {
   });
 }
 
-// Show button only if user scrolls up
-chatContainer.addEventListener("scroll", () => {
+// Scroll button
+chatContainer.addEventListener("scroll",()=>{
   const nearBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 50;
-  if (nearBottom) {
-    scrollBtn.classList.remove("show");
-  } else {
-    scrollBtn.classList.add("show");
-  }
+  if(nearBottom) scrollBtn.classList.remove("show");
+  else scrollBtn.classList.add("show");
 });
 
-// Scroll down when button clicked
-scrollBtn.addEventListener("click", () => {
-  chatContainer.scrollTo({
-    top: chatContainer.scrollHeight,
-    behavior: "smooth"
-  });
-});
+scrollBtn.addEventListener("click",()=>{ scrollToBottom(); });
 
+// Disable send button if input empty
+input.addEventListener("input",()=>{ sendBtn.disabled = !input.value.trim(); });
+sendBtn.disabled = true;

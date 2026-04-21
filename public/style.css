@@ -99,13 +99,15 @@ body {
 .message {
   padding: 8px 8px;
   border-radius: 12px;
-  max-width: 65%;              /* 🔥 FIXED WIDTH */
+  max-width: 65%;
   font-size: 13px;
   line-height: 1.3;
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: pre-wrap;
   animation: fadeIn 0.3s ease;
+
+  margin-bottom: 8px;
 }
 
 /* USER */
